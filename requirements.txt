@@ -1,0 +1,7 @@
+slack_sdk
+requests
+websocket-client
+flask
+slackeventsapi
+aiohttp
+python-dotenv
