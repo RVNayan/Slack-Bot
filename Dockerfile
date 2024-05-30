@@ -1,6 +1,7 @@
 ####
 ### To build the Image - docker build -t slack-bot-app .
 ### To run the image - docker run -p 4040:4040 -p 5000:5000 --env-file .env slack-bot-app
+###personal - ngrok http 5000 --domain=friendly-helped-hamster.ngrok-free.app
 
 ### Handling the image
 ### 1. docker save -o <path for generated tar file> <image name>

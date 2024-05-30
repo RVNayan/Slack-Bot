@@ -20,6 +20,9 @@ if __name__ == "__main__":
     manager.remove_user_from_channel(user_id, channel_name)
     manager.add_user_to_channel(user_id, channel_name)
 
+    
+ngrok code in terminal ngrok http --domain=learning-clever-gibbon.ngrok-free.app 5000
+
 """
 import os
 from slack_sdk import WebClient
@@ -176,4 +179,4 @@ if __name__ == "__main__":
 
     # manager.remove_user_from_channel(user_id, channel_name)
     # manager.add_user_to_channel(user_id, channel_name)
-    manager.find_user_channels('dummy_acc')
+    # manager.find_user_channels('dummy_acc')

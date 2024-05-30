@@ -1,10 +1,10 @@
-#While changing the commands make sure you in smaller case in if else and change at three places
-
 import os
 import slack
 import re
+import csv
+import requests
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify
+from flask import Flask
 from slackeventsapi import SlackEventAdapter
 from main import SlackChannelManager  # Import the SlackChannelManager class from main.py
 from slack_sdk import WebClient
@@ -18,13 +18,11 @@ app = Flask(__name__)
 slack_event_adapter = SlackEventAdapter(os.getenv('SIGNING_SECRET'), '/slack/events', app)
 
 # Initialize Slack WebClient with bot token
-client = slack.WebClient(token=os.getenv('BOT_TOKEN'))
+client = WebClient(token=os.getenv('BOT_TOKEN'))
 BOT_ID = client.api_call("auth.test")['user_id']
 
 # Initialize SlackChannelManager with user token
 channel_manager = SlackChannelManager(token=os.getenv('USER_TOKEN'))
-
-
 
 last_processed_time = 0
 
@@ -38,9 +36,9 @@ def message(payload):
     current_time = time.time()
 
     # Check if the current message is within 5 seconds of the last processed message
-    if current_time - last_processed_time < 5:
-        print("Message received within 5 seconds of the last one. Ignoring.")
-        return
+    # if current_time - last_processed_time < 5:
+    #     print("Message received within 5 seconds of the last one. Ignoring.")
+    #     return
 
     # Update the timestamp of the last processed message
     last_processed_time = current_time
@@ -74,10 +72,9 @@ def message(payload):
                         client.chat_postMessage(channel=post_channel_id, text="No channels specified.")
                 
                 else:
-                    client.chat_postMessage(channel=post_channel_id, text = "Sorry you cannot enter your name!")
+                    client.chat_postMessage(channel=post_channel_id, text="Sorry you cannot enter your name!")
             else:
                 client.chat_postMessage(channel=post_channel_id, text="User ID not found.")
-            
 
         # Function 2
         elif ("get_channels" in text.lower()):
@@ -91,17 +88,70 @@ def message(payload):
                 if user_channels:
                     message = f"User <@{user_id}> is present in these channels:\n" + "\n".join([f" #{channel}" for channel in user_channels])
                     client.chat_postMessage(channel=post_channel_id, text=message)
+
+                    # Save user_channels data to CSV
+                    csv_file = 'user_channels.csv'
+                    with open(csv_file, mode='w', newline='') as file:
+                        writer = csv.DictWriter(file, fieldnames=["user_id", "channel"])
+                        writer.writeheader()
+                        for channel in user_channels:
+                            writer.writerow({"user_id": user_id, "channel": channel})
+
+                    # Check if file is written correctly
+                    if os.path.exists(csv_file):
+                        print(f"CSV file {csv_file} written successfully.")
+
+                        try:
+                            # Step 1: Get upload URL
+                            file_size = os.path.getsize(csv_file)
+                            response = client.files_getUploadURLExternal(
+                                filename=csv_file,
+                                length=file_size
+                            )
+                            upload_url = response['upload_url']
+                            file_id = response['file_id']
+
+                            # Step 2: Upload file
+                            with open(csv_file, 'rb') as f:
+                                upload_response = requests.post(upload_url, files={'file': f})
+
+                            if upload_response.status_code != 200:
+                                raise Exception(f"Failed to upload file: {upload_response.text}")
+
+                            # Step 3: Complete upload
+                            complete_response = client.files_completeUploadExternal(
+                                files=[{
+                                    'id': file_id,
+                                    'title': 'User Channels CSV'
+                                }],
+                                channel_id=post_channel_id
+                            )
+
+                            if complete_response['ok']:
+                                client.chat_postMessage(
+                                    channel=post_channel_id,
+                                    text="Here's the CSV file with user channels data."
+                                )
+                            else:
+                                raise Exception(f"Failed to complete upload: {complete_response['error']}")
+
+                        except SlackApiError as e:
+                            print(f"Error uploading file: {e.response['error']}")
+                        except Exception as e:
+                            print(f"Error during file upload process: {str(e)}")
+
                 else:
                     message = f"User <@{user_id}> is not found in any channels (that the app has access to)."
+                    client.chat_postMessage(channel=post_channel_id, text=message)
             else:
                 message = "User mention not found in the message."
+                client.chat_postMessage(channel=post_channel_id, text=message)
 
         elif ("get_channels" in text.lower() and 'remove_user' in text.lower() or "add_user" in text.lower()):
             client.chat_postMessage(channel=post_channel_id, text="Invalid Command")
             
     elif BOT_ID == user_id:
         print("Message is from the bot itself. Ignoring.")
-
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
