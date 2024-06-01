@@ -4,7 +4,7 @@ import re
 import csv
 import requests
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, request, redirect, session, url_for
 from slackeventsapi import SlackEventAdapter
 from main import SlackChannelManager  # Import the SlackChannelManager class from main.py
 from slack_sdk import WebClient
@@ -15,6 +15,7 @@ import time
 load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your_default_secret_key')
 slack_event_adapter = SlackEventAdapter(os.getenv('SIGNING_SECRET'), '/slack/events', app)
 
 # Initialize Slack WebClient with bot token
@@ -26,6 +27,47 @@ channel_manager = SlackChannelManager(token=os.getenv('USER_TOKEN'))
 
 last_processed_time = 0
 
+client_id = os.getenv('SLACK_CLIENT_ID')
+client_secret = os.getenv('SLACK_CLIENT_SECRET')
+
+@app.route('/')
+def home():
+    return 'Welcome to the Slack OAuth'
+
+@app.route('/start')
+def start():
+    slack_auth_url = (
+        f"https://slack.com/oauth/v2/authorize?client_id={client_id}"
+        f"&scope=channels:read,groups:read,chat:write,team:read,users:read"
+        f"&redirect_uri={url_for('oauth_callback', _external=True)}"
+    )
+    return redirect(slack_auth_url)
+
+@app.route('/oauth/callback')
+def oauth_callback():
+    code = request.args.get('code')
+    if not code:
+        return 'Error: No code provided', 400
+
+    # Exchange the code for an access token
+    response = requests.post('https://slack.com/api/oauth.v2.access', data={
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'code': code,
+        'redirect_uri': url_for('oauth_callback', _external=True)
+    })
+
+    data = response.json()
+    if not data.get('ok'):
+        return f"Error: {data.get('error')}", 400
+
+    # Use the access token for further API requests
+    access_token = data['access_token']
+    # Store the access token and other information in session or database
+    session['access_token'] = access_token
+
+    return f"Success! Access token: {access_token}"
+
 @slack_event_adapter.on('message')
 def message(payload):
     global last_processed_time
@@ -36,9 +78,9 @@ def message(payload):
     current_time = time.time()
 
     # Check if the current message is within 5 seconds of the last processed message
-    # if current_time - last_processed_time < 5:
-    #     print("Message received within 5 seconds of the last one. Ignoring.")
-    #     return
+    if current_time - last_processed_time < 5:
+        print("Message received within 5 seconds of the last one. Ignoring.")
+        return
 
     # Update the timestamp of the last processed message
     last_processed_time = current_time
@@ -47,19 +89,18 @@ def message(payload):
 
     # Function 1
     if BOT_ID != user_id:
-    
         if ("remove_user" in text.lower() or "add_user" in text.lower()):
             user_match = re.search(r'<@(.*?)>', text)
             if user_match:
                 user_to_modify = user_match.group(1)
                 print("User ID:", user_to_modify)
-                
+
                 if user_to_modify != user_id and user_to_modify != BOT_ID:
                     channel_matches = re.findall(r'<#(.*?)\|', text)
                     if channel_matches:
                         channels = channel_matches
                         print("Channels:", channels)
-                        
+
                         if "remove_user" in text.lower():
                             for channel_id in channels:
                                 channel_manager.remove_user_from_channel(user_to_modify, channel_id)
@@ -70,7 +111,6 @@ def message(payload):
                             client.chat_postMessage(channel=post_channel_id, text=f"User <@{user_to_modify}> added to specified channels.")
                     else:
                         client.chat_postMessage(channel=post_channel_id, text="No channels specified.")
-                
                 else:
                     client.chat_postMessage(channel=post_channel_id, text="Sorry you cannot enter your name!")
             else:
@@ -82,7 +122,7 @@ def message(payload):
             if username_match:
                 user_id = username_match.group(1)
                 print(user_id)
-                
+
                 user_channels = channel_manager.find_user_channels(user_id)
 
                 if user_channels:
@@ -149,7 +189,13 @@ def message(payload):
 
         elif ("get_channels" in text.lower() and 'remove_user' in text.lower() or "add_user" in text.lower()):
             client.chat_postMessage(channel=post_channel_id, text="Invalid Command")
-            
+
+
+        elif ("all_channels" in text.lower()):
+            all_channels = channel_manager.all_channels()
+            print(all_channels)
+
+
     elif BOT_ID == user_id:
         print("Message is from the bot itself. Ignoring.")
 

@@ -3,9 +3,11 @@
 ### To run the image - docker run -p 4040:4040 -p 5000:5000 --env-file .env slack-bot-app
 ###personal - ngrok http 5000 --domain=friendly-helped-hamster.ngrok-free.app
 
-### Handling the image
+### Handling the image ngrok http --domain=learning-clever-gibbon.ngrok-free.app 5000
+
 ### 1. docker save -o <path for generated tar file> <image name>
 ### 2. docker load -i <path to image tar file>
+###FOR FLASK KEY - python3 -c "import os; print(os.urandom(24).hex())"
 
 ####
 FROM ubuntu:20.04

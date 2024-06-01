@@ -29,6 +29,8 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from dotenv import load_dotenv
 from pathlib import Path
+import csv
+
 
 class SlackChannelManager:
     def __init__(self, token):
@@ -111,17 +113,55 @@ class SlackChannelManager:
 
 
 
+    # def get_channels(self):
+        
+    #     channels = []
+    #     seen_channel_ids = set()
+    #     cursor = None
+
+    #     try:
+    #         while True:
+    #             if cursor:
+    #                 response = self.client.conversations_list(types="public_channel,private_channel", cursor=cursor)
+    #             else:
+    #                 response = self.client.conversations_list(types="public_channel,private_channel")
+
+    #             if response["ok"]:
+    #                 for channel in response["channels"]:
+    #                     if channel["id"] not in seen_channel_ids:
+    #                         channels.append(channel)
+    #                         seen_channel_ids.add(channel["id"])
+
+    #                 cursor = response.get("response_metadata", {}).get("next_cursor")
+
+    #                 # Break the loop if there are no more pages
+    #                 if not cursor:
+    #                     break
+    #             else:
+    #                 print(f"Error fetching channels: {response['error']}")
+    #                 break
+    #     except SlackApiError as e:
+    #         print(f"Slack API Error: {e.response['error']}")
+
+    #     return channels
+
     def get_channels(self):
+        channels = []
+        seen_channel_ids = set()
+        csv_file = 'channels.csv'
+
+        # Read channels from the CSV file
         try:
-            response = self.client.conversations_list(types="public_channel,private_channel")
-            if response["ok"]:
-                return response["channels"]
-            else:
-                print(f"Error fetching channels: {response['error']}")
-                return []
-        except SlackApiError as e:
-            print(f"Slack API Error: {e.response['error']}")
-            return []
+            with open(csv_file, mode='r', newline='') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if row["id"] not in seen_channel_ids:
+                        channels.append({"id": row["id"], "name": row["name"]})
+                        seen_channel_ids.add(row["id"])
+        except FileNotFoundError:
+            print(f"CSV file {csv_file} not found. Please run all_channels() to generate the file.")
+        
+        return channels
 
     def get_user_id(self,username):
         try:
@@ -164,6 +204,47 @@ class SlackChannelManager:
         else:
             return []
         
+
+    def all_channels(self):
+        channels = []
+        seen_channel_ids = set()
+        cursor = None
+
+        try:
+            while True:
+                if cursor:
+                    response = self.client.conversations_list(types="public_channel,private_channel", cursor=cursor)
+                else:
+                    response = self.client.conversations_list(types="public_channel,private_channel")
+
+                if response["ok"]:
+                    for channel in response["channels"]:
+                        if channel["id"] not in seen_channel_ids:
+                            channels.append({"id": channel["id"], "name": channel["name"]})
+                            seen_channel_ids.add(channel["id"])
+
+                    cursor = response.get("response_metadata", {}).get("next_cursor")
+
+                    # Break the loop if there are no more pages
+                    if not cursor:
+                        break
+                else:
+                    print(f"Error fetching channels: {response['error']}")
+                    break
+        except SlackApiError as e:
+            print(f"Slack API Error: {e.response['error']}")
+
+        # Save channels to a CSV file
+        csv_file = 'channels.csv'
+        with open(csv_file, mode='w', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=["id", "name"])
+            writer.writeheader()
+            for channel in channels:
+                writer.writerow(channel)
+        # print("**************************")
+        # print(response)
+        return channels
+            
 #Default Test
 if __name__ == "__main__":
 
@@ -174,8 +255,8 @@ if __name__ == "__main__":
     user_token = os.getenv('USER_TOKEN')
     manager = SlackChannelManager(token=user_token)
     
-    user_id = 'U074B0YNB7F' #Note Taken from the profile not from channel
-    channel_name = 'C0757KFK6Q0'
+    # user_id = 'U074B0YNB7F' #Note Taken from the profile not from channel
+    # channel_name = 'C0757KFK6Q0'
 
     # manager.remove_user_from_channel(user_id, channel_name)
     # manager.add_user_to_channel(user_id, channel_name)
