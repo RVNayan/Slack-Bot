@@ -10,6 +10,7 @@
 ###FOR FLASK KEY - python3 -c "import os; print(os.urandom(24).hex())"
 
 ####
+
 FROM ubuntu:20.04
 
 # Set environment variables to avoid interactive prompts during installation
@@ -43,6 +44,9 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container
 COPY . .
 
+# Copy the .env file into the container
+COPY .env .env
+
 # Set environment variables for Flask
 ENV FLASK_APP=botauto.py
 ENV FLASK_RUN_HOST=0.0.0.0
@@ -53,5 +57,5 @@ EXPOSE 5000
 # Authenticate ngrok
 RUN ngrok config add-authtoken 2gtxStCwdAXjzK4AeYOjQZWEAVq_5QpGowEawgZQcp2whpS6M
 
-# Start ngrok and Flask app together (imp)
+# Start ngrok and Flask app together
 CMD ngrok http 5000 --domain=friendly-helped-hamster.ngrok-free.app & python3 -u -m flask run --host=0.0.0.0 --port=5000
