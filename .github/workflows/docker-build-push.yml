@@ -37,7 +37,6 @@ jobs:
           echo "SLACK_CLIENT_SECRET=${{ secrets.SLACK_CLIENT_SECRET }}" >> .env
           echo "FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}" >> .env
           
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
