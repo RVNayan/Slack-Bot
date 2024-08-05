@@ -18,11 +18,10 @@ This Slack app integration has the following exclusive features
 ## Prerequisites
 
 Before you begin, ensure you have met the following requirements:
-
-- [Requirement 1]
-- [Requirement 2]
-- [Requirement 3]
-
+1. Make sure you create a app in [Slack Website](https://api.slack.com/apps)
+2. Assign the necessary permissions to the bot.
+3. Copy the following keys and create a .env file
+    USER_TOKEN, BOT_TOKEN, SIGNING_SECRET, SLACK_API_TOKEN, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, FLASK_SECRET_KEY (Generate from Terminal)
 ## Installation
 
 To install and set up the Slack bot, follow these steps:
