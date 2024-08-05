@@ -1,6 +1,6 @@
 # Slack Bot
 
-![Slack API](https://w7.pngwing.com/pngs/345/302/png-transparent-chat-slack-slack-logo-social-media-icon-thumbnail.png)
+![Slack API](https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Slack_Technologies_Logo.svg/2560px-Slack_Technologies_Logo.svg.png)
 
 ## What Does it do?
 
