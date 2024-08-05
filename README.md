@@ -1,6 +1,6 @@
 # Slack Bot
 
-![Slack API](https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Slack_Technologies_Logo.svg/2560px-Slack_Technologies_Logo.svg.png)
+![Slack API](https://w7.pngwing.com/pngs/345/302/png-transparent-chat-slack-slack-logo-social-media-icon-thumbnail.png)
 
 ## What Does it do?
 
@@ -10,9 +10,10 @@ This Slack app integration has the following exclusive features
 → Bulk add/remove any number of users from any channel
 ## Commands
 
-- add @user_name #channel_name
-- remove @user_name #channel_name
-- get_channels @user_name
+- **_add_ @user_name #channel_name**
+- **_remove_ @user_name #channel_name**
+- **_get_channels_ @user_name**
+
 
 ## Prerequisites
 
