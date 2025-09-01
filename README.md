@@ -2,6 +2,8 @@
 
 ![Slack API](https://a.slack-edge.com/80588/img/slack_api_logo_vogue.png)
 
+[![Demo Video](https://img.youtube.com/vi/VIDEO_ID/0.jpg)](https://drive.google.com/file/d/1iGYDw1Fc7rOxV6mi5rDvKMMYbQZe5WLn/view?usp=sharing)
+
 ## What Does It Do?
 
 This Slack bot integrates seamlessly with Slack and offers the following exclusive features:
